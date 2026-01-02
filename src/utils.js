@@ -29,10 +29,26 @@ export function createHttpClient(options = {}) {
       // Apply CORS proxy if specified
       const finalUrl = corsProxy ? `${corsProxy}${encodeURIComponent(url)}` : url;
 
+      // isomorphic-git may pass body as array of Uint8Arrays - concatenate them
+      let requestBody = body;
+      if (Array.isArray(body)) {
+        const chunks = [];
+        for (const chunk of body) {
+          chunks.push(chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk));
+        }
+        const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        requestBody = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+          requestBody.set(chunk, offset);
+          offset += chunk.length;
+        }
+      }
+
       const res = await fetch(finalUrl, {
         method,
         headers: { ...reqHeaders, ...headers },
-        body
+        body: requestBody
       });
 
       return {
