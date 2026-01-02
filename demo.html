@@ -3,411 +3,318 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nostr Git Demo</title>
+  <title>Live Notes - Nostr Git Demo</title>
   <style>
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      background: #1a1a2e;
-      color: #eee;
+      margin: 0;
+      background: #0f0f1a;
+      color: #e0e0e0;
       min-height: 100vh;
     }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      padding: 40px 20px;
+      border-bottom: 1px solid #2a2a3a;
+      margin-bottom: 30px;
+    }
     h1 {
-      color: #7c3aed;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      color: #a78bfa;
+      margin: 0 0 10px 0;
+      font-size: 2.5rem;
+    }
+    .tagline {
+      color: #888;
+      font-size: 1.1rem;
     }
     .status {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
-      background: #2d2d44;
+      padding: 6px 14px;
+      background: #1a1a2e;
       border-radius: 20px;
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: 13px;
+      margin-top: 15px;
     }
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #666;
     }
-    .dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
-    .dot.connected { background: #10b981; }
-    .dot.synced { background: #3b82f6; }
+    .dot.syncing { background: #f59e0b; animation: pulse 1s infinite; }
+    .dot.synced { background: #10b981; }
     .dot.error { background: #ef4444; }
     @keyframes pulse { 50% { opacity: 0.5; } }
 
-    .config {
-      background: #2d2d44;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+    .notes-list {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 30px;
     }
-    .config h3 { margin-top: 0; color: #a78bfa; }
-    .field { margin-bottom: 15px; }
-    .field label { display: block; margin-bottom: 5px; color: #888; font-size: 13px; }
-    .field input, .field select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #444;
-      border-radius: 8px;
+    .note-card {
       background: #1a1a2e;
-      color: #eee;
-      font-size: 14px;
-    }
-    button {
-      background: #7c3aed;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    button:hover { background: #6d28d9; }
-    button:disabled { background: #444; cursor: not-allowed; }
-
-    .files {
-      background: #2d2d44;
       border-radius: 12px;
-      overflow: hidden;
-    }
-    .files h3 {
-      margin: 0;
-      padding: 15px 20px;
-      background: #252538;
-      color: #a78bfa;
-      border-bottom: 1px solid #3d3d55;
-    }
-    .file-list { list-style: none; margin: 0; padding: 0; }
-    .file-item {
-      padding: 12px 20px;
-      border-bottom: 1px solid #3d3d55;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .file-item:hover { background: #353550; }
-    .file-item:last-child { border-bottom: none; }
-    .file-item.dir { color: #60a5fa; }
-    .file-item.file { color: #eee; }
-    .file-icon { opacity: 0.6; }
-
-    .viewer {
-      background: #2d2d44;
-      border-radius: 12px;
-      margin-top: 20px;
-      overflow: hidden;
-    }
-    .viewer-header {
-      padding: 15px 20px;
-      background: #252538;
-      border-bottom: 1px solid #3d3d55;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .viewer-header h4 { margin: 0; color: #a78bfa; }
-    .viewer-content {
       padding: 20px;
-      white-space: pre-wrap;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      max-height: 400px;
-      overflow: auto;
+      cursor: pointer;
+      border: 1px solid #2a2a3a;
+      transition: all 0.2s;
+    }
+    .note-card:hover {
+      border-color: #a78bfa;
+      transform: translateY(-2px);
+    }
+    .note-card h3 {
+      margin: 0 0 8px 0;
+      color: #fff;
+    }
+    .note-card p {
+      margin: 0;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .note-view {
+      display: none;
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 30px;
+      border: 1px solid #2a2a3a;
+    }
+    .note-view.active {
+      display: block;
     }
     .back-btn {
-      background: #444;
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .log {
-      margin-top: 20px;
-      padding: 15px;
-      background: #0d0d1a;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 150px;
-      overflow: auto;
-    }
-    .log-entry { margin: 4px 0; color: #888; }
-    .log-entry.info { color: #60a5fa; }
-    .log-entry.success { color: #10b981; }
-    .log-entry.error { color: #ef4444; }
-
-    .commit-info {
-      background: #252538;
-      padding: 12px 20px;
-      border-radius: 8px;
+      background: none;
+      border: 1px solid #444;
+      color: #888;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
       margin-bottom: 20px;
-      font-size: 13px;
+      font-size: 14px;
     }
-    .commit-info code {
-      background: #1a1a2e;
+    .back-btn:hover {
+      border-color: #a78bfa;
+      color: #a78bfa;
+    }
+
+    /* Markdown styles */
+    .markdown h1 { color: #a78bfa; border-bottom: 1px solid #2a2a3a; padding-bottom: 10px; }
+    .markdown h2 { color: #8b5cf6; margin-top: 30px; }
+    .markdown h3 { color: #7c3aed; }
+    .markdown p { line-height: 1.7; }
+    .markdown a { color: #60a5fa; }
+    .markdown code {
+      background: #0f0f1a;
       padding: 2px 6px;
       border-radius: 4px;
-      color: #10b981;
+      font-family: 'Monaco', monospace;
+      font-size: 0.9em;
     }
+    .markdown pre {
+      background: #0f0f1a;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .markdown pre code {
+      background: none;
+      padding: 0;
+    }
+    .markdown blockquote {
+      border-left: 3px solid #a78bfa;
+      margin: 20px 0;
+      padding-left: 20px;
+      color: #aaa;
+      font-style: italic;
+    }
+    .markdown ul, .markdown ol {
+      padding-left: 25px;
+      line-height: 1.8;
+    }
+    .markdown li input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .update-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #7c3aed;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      display: none;
+      animation: slideIn 0.3s;
+    }
+    .update-toast.show { display: block; }
+    @keyframes slideIn {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: #555;
+      font-size: 13px;
+    }
+    .footer a { color: #a78bfa; }
   </style>
 </head>
 <body>
-  <h1>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 6v6l4 2"/>
-    </svg>
-    Nostr Git Demo
-  </h1>
+  <div class="container">
+    <header>
+      <h1>📝 Live Notes</h1>
+      <p class="tagline">Git-synced notes via Nostr - updates appear automatically</p>
+      <div class="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </header>
 
-  <div class="status">
-    <span class="dot" id="statusDot"></span>
-    <span id="statusText">Ready</span>
+    <div id="notesList" class="notes-list"></div>
+
+    <div id="noteView" class="note-view">
+      <button class="back-btn" onclick="showList()">← Back to notes</button>
+      <div id="noteContent" class="markdown"></div>
+    </div>
+
+    <div class="footer">
+      Powered by <a href="https://github.com/JavaScriptSolidServer/nostr-git-client">nostr-git-client</a>
+      • Syncing from <a href="https://solid.social/mel/public/notes">solid.social</a>
+    </div>
   </div>
 
-  <div class="config" id="configPanel">
-    <h3>Connect to a Git Repo</h3>
-    <div class="field">
-      <label>Repository URL</label>
-      <input type="text" id="repoUrl" value="https://solid.social/mel/public/sync-dashboard" placeholder="https://...">
-    </div>
-    <div class="field">
-      <label>Branch</label>
-      <input type="text" id="branch" value="gh-pages" placeholder="main">
-    </div>
-    <div class="field">
-      <label>Nostr Relay</label>
-      <select id="relay">
-        <option value="wss://relay.damus.io">relay.damus.io</option>
-        <option value="wss://nos.lol">nos.lol</option>
-        <option value="wss://relay.nostr.band">relay.nostr.band</option>
-      </select>
-    </div>
-    <button id="connectBtn" onclick="connect()">Connect & Sync</button>
+  <div id="updateToast" class="update-toast">
+    ✨ Notes updated!
   </div>
-
-  <div id="commitInfo" class="commit-info" style="display: none;"></div>
-
-  <div id="filesPanel" class="files" style="display: none;">
-    <h3 id="filesTitle">Files</h3>
-    <ul class="file-list" id="fileList"></ul>
-  </div>
-
-  <div id="viewerPanel" class="viewer" style="display: none;">
-    <div class="viewer-header">
-      <h4 id="viewerTitle">file.txt</h4>
-      <button class="back-btn" onclick="goBack()">← Back</button>
-    </div>
-    <div class="viewer-content" id="viewerContent"></div>
-  </div>
-
-  <div class="log" id="log"></div>
 
   <script type="importmap">
   {
     "imports": {
       "nostr-git-client": "https://esm.sh/nostr-git-client@0.0.1",
-      "isomorphic-git": "https://esm.sh/isomorphic-git@1.27.1",
-      "@isomorphic-git/lightning-fs": "https://esm.sh/@isomorphic-git/lightning-fs@4.6.0",
-      "nostr-tools/pure": "https://esm.sh/nostr-tools@2.19.4/pure"
+      "marked": "https://esm.sh/marked@9.0.0"
     }
   }
   </script>
 
   <script type="module">
     import { NostrGitClient } from 'nostr-git-client';
+    import { marked } from 'marked';
 
-    let client = null;
-    let currentPath = '';
+    const REPO = 'https://solid.social/mel/public/notes';
+    const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
 
-    // Make functions available globally
-    window.connect = connect;
-    window.goBack = goBack;
-    window.openItem = openItem;
+    let client;
+    let notes = [];
+    let currentNote = null;
 
-    function log(msg, type = '') {
-      const el = document.getElementById('log');
-      const time = new Date().toLocaleTimeString();
-      el.innerHTML += `<div class="log-entry ${type}">[${time}] ${msg}</div>`;
-      el.scrollTop = el.scrollHeight;
+    // Simple markdown rendering with marked
+    function renderMarkdown(text) {
+      return marked.parse(text);
     }
 
-    function setStatus(status, text) {
-      document.getElementById('statusDot').className = `dot ${status}`;
+    function setStatus(state, text) {
+      document.getElementById('statusDot').className = `dot ${state}`;
       document.getElementById('statusText').textContent = text;
     }
 
-    async function connect() {
-      const repoUrl = document.getElementById('repoUrl').value;
-      const branch = document.getElementById('branch').value;
-      const relay = document.getElementById('relay').value;
+    function showToast() {
+      const toast = document.getElementById('updateToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
 
-      if (!repoUrl) {
-        log('Please enter a repository URL', 'error');
+    async function loadNotes() {
+      const files = await client.listFiles();
+      notes = files.filter(f => f.name.endsWith('.md'));
+      renderList();
+
+      // If viewing a note, refresh it
+      if (currentNote) {
+        await showNote(currentNote);
+      }
+    }
+
+    function renderList() {
+      const list = document.getElementById('notesList');
+
+      if (notes.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#666;">No notes yet</p>';
         return;
       }
 
-      document.getElementById('connectBtn').disabled = true;
-      setStatus('connecting', 'Connecting...');
-      log(`Connecting to ${relay}...`);
+      list.innerHTML = notes.map(note => {
+        const title = note.name.replace('.md', '').replace(/-/g, ' ');
+        const titleCased = title.charAt(0).toUpperCase() + title.slice(1);
+        return `
+          <div class="note-card" onclick="window.showNote('${note.path}')">
+            <h3>${titleCased}</h3>
+            <p>${note.path}</p>
+          </div>
+        `;
+      }).join('');
+    }
 
-      // Create client
+    window.showNote = async function(path) {
+      currentNote = path;
+      const content = await client.readFile(path);
+      document.getElementById('noteContent').innerHTML = renderMarkdown(content);
+      document.getElementById('notesList').style.display = 'none';
+      document.getElementById('noteView').classList.add('active');
+    };
+
+    window.showList = function() {
+      currentNote = null;
+      document.getElementById('notesList').style.display = 'grid';
+      document.getElementById('noteView').classList.remove('active');
+    };
+
+    // Initialize
+    async function init() {
       client = new NostrGitClient({
-        repo: repoUrl,
-        branch: branch,
-        relays: [relay]
+        repo: REPO,
+        branch: 'main',
+        relays: RELAYS
       });
 
-      // Set up event handlers
-      client.on('connect', (url) => {
-        log(`Connected to ${url}`, 'success');
-        setStatus('connected', 'Connected');
+      client.on('connect', () => {
+        setStatus('syncing', 'Connected, syncing...');
       });
 
-      client.on('disconnect', (url) => {
-        log(`Disconnected from ${url}`);
-      });
-
-      client.on('sync', (event) => {
-        if (event.status === 'start') {
-          log('Syncing repository...', 'info');
-          setStatus('connecting', 'Syncing...');
-        } else if (event.status === 'complete') {
-          log(`Synced to ${event.commit?.slice(0, 8)}`, 'success');
-          setStatus('synced', 'Synced');
-          showCommitInfo(event);
-          showFiles('');
+      client.on('sync', async (event) => {
+        if (event.status === 'complete') {
+          setStatus('synced', `Synced • ${event.commit?.slice(0, 7)}`);
+          await loadNotes();
         } else if (event.status === 'error') {
-          log(`Sync error: ${event.error}`, 'error');
           setStatus('error', 'Sync failed');
         }
       });
 
-      client.on('error', (err) => {
-        log(`Error: ${err.message}`, 'error');
-      });
-
-      client.on('event', (event) => {
-        if (event.type === 'repo') {
-          log(`Repo event: ${event.commit?.slice(0, 8)} on ${event.branch}`, 'info');
+      client.on('event', async (event) => {
+        if (event.type === 'repo' && event.commit !== client.currentCommit) {
+          setStatus('syncing', 'Updating...');
+          await client.sync(event.commit);
+          showToast();
         }
       });
 
       // Connect and sync
+      setStatus('syncing', 'Connecting...');
       client.connect();
-
-      try {
-        await client.sync();
-        document.getElementById('configPanel').style.display = 'none';
-      } catch (err) {
-        log(`Failed: ${err.message}`, 'error');
-        setStatus('error', 'Failed');
-        document.getElementById('connectBtn').disabled = false;
-      }
+      await client.sync();
     }
 
-    function showCommitInfo(event) {
-      const el = document.getElementById('commitInfo');
-      el.style.display = 'block';
-      el.innerHTML = `
-        <strong>Commit:</strong> <code>${event.commit?.slice(0, 8)}</code>
-        &nbsp;•&nbsp; ${event.message?.split('\n')[0] || 'No message'}
-        &nbsp;•&nbsp; ${event.author || 'Unknown'}
-        &nbsp;•&nbsp; ${event.date?.toLocaleDateString() || ''}
-      `;
-    }
-
-    async function showFiles(path) {
-      currentPath = path;
-      const panel = document.getElementById('filesPanel');
-      const list = document.getElementById('fileList');
-      const title = document.getElementById('filesTitle');
-
-      panel.style.display = 'block';
-      document.getElementById('viewerPanel').style.display = 'none';
-
-      title.textContent = path ? `📁 /${path}` : '📁 Files';
-      list.innerHTML = '<li class="file-item" style="color: #666;">Loading...</li>';
-
-      try {
-        const files = await client.listFiles(path);
-
-        let html = '';
-
-        // Add parent directory link if not at root
-        if (path) {
-          const parent = path.split('/').slice(0, -1).join('/');
-          html += `<li class="file-item dir" onclick="openItem('dir', '${parent}')">
-            <span class="file-icon">📁</span> ..
-          </li>`;
-        }
-
-        for (const file of files) {
-          const icon = file.type === 'dir' ? '📁' : getFileIcon(file.name);
-          html += `<li class="file-item ${file.type}" onclick="openItem('${file.type}', '${file.path}')">
-            <span class="file-icon">${icon}</span> ${file.name}
-          </li>`;
-        }
-
-        list.innerHTML = html || '<li class="file-item" style="color: #666;">Empty directory</li>';
-      } catch (err) {
-        list.innerHTML = `<li class="file-item" style="color: #ef4444;">Error: ${err.message}</li>`;
-      }
-    }
-
-    function getFileIcon(name) {
-      const ext = name.split('.').pop().toLowerCase();
-      const icons = {
-        js: '📜', ts: '📜', json: '📋', html: '🌐', css: '🎨',
-        md: '📝', txt: '📄', png: '🖼️', jpg: '🖼️', gif: '🖼️',
-        svg: '🎭', sh: '⚙️', yml: '⚙️', yaml: '⚙️'
-      };
-      return icons[ext] || '📄';
-    }
-
-    async function openItem(type, path) {
-      if (type === 'dir') {
-        showFiles(path);
-      } else {
-        await showFile(path);
-      }
-    }
-
-    async function showFile(path) {
-      const panel = document.getElementById('viewerPanel');
-      const title = document.getElementById('viewerTitle');
-      const content = document.getElementById('viewerContent');
-
-      document.getElementById('filesPanel').style.display = 'none';
-      panel.style.display = 'block';
-
-      title.textContent = path;
-      content.textContent = 'Loading...';
-
-      try {
-        const text = await client.readFile(path);
-        content.textContent = text;
-      } catch (err) {
-        content.textContent = `Error reading file: ${err.message}`;
-      }
-    }
-
-    function goBack() {
-      showFiles(currentPath);
-    }
-
-    // Initial log
-    log('Ready. Enter a repo URL and click Connect.');
+    init();
   </script>
 </body>
 </html>
