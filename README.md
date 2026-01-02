@@ -4,6 +4,8 @@ Browser-based git sync via Nostr with optional Bitcoin anchoring.
 
 Subscribe to NIP-34 repo state events (kind 30618) and sync git repositories to browser IndexedDB using isomorphic-git.
 
+**[Try the Demo](https://javascriptsolidserver.github.io/nostr-git-client/demo.html)**
+
 ## Installation
 
 ```bash
