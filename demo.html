@@ -161,6 +161,16 @@
       to { transform: translateY(0); opacity: 1; }
     }
 
+    .last-updated {
+      color: #666;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .last-updated .time {
+      color: #10b981;
+      font-weight: 500;
+    }
+
     .footer {
       text-align: center;
       padding: 30px;
@@ -179,6 +189,7 @@
         <span class="dot" id="statusDot"></span>
         <span id="statusText">Connecting...</span>
       </div>
+      <div id="lastUpdated" class="last-updated"></div>
     </header>
 
     <div id="notesList" class="notes-list"></div>
@@ -226,6 +237,13 @@
     function setStatus(state, text) {
       document.getElementById('statusDot').className = `dot ${state}`;
       document.getElementById('statusText').textContent = text;
+    }
+
+    function updateTimestamp() {
+      const now = new Date();
+      const time = now.toLocaleTimeString();
+      document.getElementById('lastUpdated').innerHTML =
+        `Last synced: <span class="time">${time}</span>`;
     }
 
     function showToast() {
@@ -294,6 +312,7 @@
       client.on('sync', async (event) => {
         if (event.status === 'complete') {
           setStatus('synced', `Synced • ${event.commit?.slice(0, 7)}`);
+          updateTimestamp();
           await loadNotes();
         } else if (event.status === 'error') {
           setStatus('error', 'Sync failed');
