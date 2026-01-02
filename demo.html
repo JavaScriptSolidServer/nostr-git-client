@@ -407,6 +407,15 @@
     import git from 'isomorphic-git';
     import * as nostrTools from 'nostr-tools';
 
+    // Helper to convert hex string to Uint8Array
+    function hexToBytes(hex) {
+      const bytes = new Uint8Array(hex.length / 2);
+      for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+      }
+      return bytes;
+    }
+
     const REPO = 'https://solid.social/mel/public/notes';
     const REPO_ID = 'notes';
     const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
@@ -697,7 +706,7 @@
           };
 
           // Use finalizeEvent which hashes and signs
-          const signedEvent = nostrTools.finalizeEvent(authEvent, nostrTools.hexToBytes(privkey));
+          const signedEvent = nostrTools.finalizeEvent(authEvent, hexToBytes(privkey));
 
           // Base64 encode the event
           const authHeader = 'Nostr ' + btoa(JSON.stringify(signedEvent));
@@ -714,7 +723,7 @@
     }
 
     async function publishNostrEvent(commit) {
-      const secretKey = nostrTools.hexToBytes(privkey);
+      const secretKey = hexToBytes(privkey);
 
       const eventTemplate = {
         kind: 30618,
