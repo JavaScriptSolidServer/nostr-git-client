@@ -420,12 +420,6 @@
     let isNewNote = false;
     let privkey = localStorage.getItem('nostr-privkey') || '';
 
-    // Initialize privkey input
-    if (privkey) {
-      document.getElementById('privkeyInput').value = privkey;
-      onPrivkeyChange();
-    }
-
     function renderMarkdown(text) {
       return marked.parse(text);
     }
@@ -485,6 +479,12 @@
         document.getElementById('editBtn').classList.remove('show');
       }
     };
+
+    // Initialize privkey input from localStorage
+    if (privkey) {
+      document.getElementById('privkeyInput').value = privkey;
+      window.onPrivkeyChange();
+    }
 
     async function loadNotes() {
       const files = await client.listFiles();
