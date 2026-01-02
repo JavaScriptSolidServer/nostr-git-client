@@ -1,6 +1,6 @@
 {
   "name": "nostr-git-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Browser-based git sync via Nostr with optional Bitcoin anchoring",
   "type": "module",
   "main": "src/index.js",
