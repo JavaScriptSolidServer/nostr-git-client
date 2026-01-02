@@ -646,7 +646,8 @@
           http,
           dir,
           url: REPO,
-          ref: 'main'
+          ref: 'main',
+          force: true  // Force push since we may be editing on stale state
         });
 
         showSaving('Publishing to Nostr...');
