@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nostr Git Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #7c3aed;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #2d2d44;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+    .dot.connected { background: #10b981; }
+    .dot.synced { background: #3b82f6; }
+    .dot.error { background: #ef4444; }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+
+    .config {
+      background: #2d2d44;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .config h3 { margin-top: 0; color: #a78bfa; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; margin-bottom: 5px; color: #888; font-size: 13px; }
+    .field input, .field select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background: #1a1a2e;
+      color: #eee;
+      font-size: 14px;
+    }
+    button {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:hover { background: #6d28d9; }
+    button:disabled { background: #444; cursor: not-allowed; }
+
+    .files {
+      background: #2d2d44;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .files h3 {
+      margin: 0;
+      padding: 15px 20px;
+      background: #252538;
+      color: #a78bfa;
+      border-bottom: 1px solid #3d3d55;
+    }
+    .file-list { list-style: none; margin: 0; padding: 0; }
+    .file-item {
+      padding: 12px 20px;
+      border-bottom: 1px solid #3d3d55;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-item:hover { background: #353550; }
+    .file-item:last-child { border-bottom: none; }
+    .file-item.dir { color: #60a5fa; }
+    .file-item.file { color: #eee; }
+    .file-icon { opacity: 0.6; }
+
+    .viewer {
+      background: #2d2d44;
+      border-radius: 12px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .viewer-header {
+      padding: 15px 20px;
+      background: #252538;
+      border-bottom: 1px solid #3d3d55;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .viewer-header h4 { margin: 0; color: #a78bfa; }
+    .viewer-content {
+      padding: 20px;
+      white-space: pre-wrap;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 400px;
+      overflow: auto;
+    }
+    .back-btn {
+      background: #444;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .log {
+      margin-top: 20px;
+      padding: 15px;
+      background: #0d0d1a;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 150px;
+      overflow: auto;
+    }
+    .log-entry { margin: 4px 0; color: #888; }
+    .log-entry.info { color: #60a5fa; }
+    .log-entry.success { color: #10b981; }
+    .log-entry.error { color: #ef4444; }
+
+    .commit-info {
+      background: #252538;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .commit-info code {
+      background: #1a1a2e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>
+    Nostr Git Demo
+  </h1>
+
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Ready</span>
+  </div>
+
+  <div class="config" id="configPanel">
+    <h3>Connect to a Git Repo</h3>
+    <div class="field">
+      <label>Repository URL</label>
+      <input type="text" id="repoUrl" value="https://solid.social/mel/public/sync-dashboard" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Branch</label>
+      <input type="text" id="branch" value="main" placeholder="main">
+    </div>
+    <div class="field">
+      <label>Nostr Relay</label>
+      <select id="relay">
+        <option value="wss://relay.damus.io">relay.damus.io</option>
+        <option value="wss://nos.lol">nos.lol</option>
+        <option value="wss://relay.nostr.band">relay.nostr.band</option>
+      </select>
+    </div>
+    <button id="connectBtn" onclick="connect()">Connect & Sync</button>
+  </div>
+
+  <div id="commitInfo" class="commit-info" style="display: none;"></div>
+
+  <div id="filesPanel" class="files" style="display: none;">
+    <h3 id="filesTitle">Files</h3>
+    <ul class="file-list" id="fileList"></ul>
+  </div>
+
+  <div id="viewerPanel" class="viewer" style="display: none;">
+    <div class="viewer-header">
+      <h4 id="viewerTitle">file.txt</h4>
+      <button class="back-btn" onclick="goBack()">← Back</button>
+    </div>
+    <div class="viewer-content" id="viewerContent"></div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "nostr-git-client": "https://esm.sh/nostr-git-client@0.0.1",
+      "isomorphic-git": "https://esm.sh/isomorphic-git@1.27.1",
+      "@isomorphic-git/lightning-fs": "https://esm.sh/@isomorphic-git/lightning-fs@4.6.0",
+      "nostr-tools/pure": "https://esm.sh/nostr-tools@2.19.4/pure"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import { NostrGitClient } from 'nostr-git-client';
+
+    let client = null;
+    let currentPath = '';
+
+    // Make functions available globally
+    window.connect = connect;
+    window.goBack = goBack;
+    window.openItem = openItem;
+
+    function log(msg, type = '') {
+      const el = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      el.innerHTML += `<div class="log-entry ${type}">[${time}] ${msg}</div>`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(status, text) {
+      document.getElementById('statusDot').className = `dot ${status}`;
+      document.getElementById('statusText').textContent = text;
+    }
+
+    async function connect() {
+      const repoUrl = document.getElementById('repoUrl').value;
+      const branch = document.getElementById('branch').value;
+      const relay = document.getElementById('relay').value;
+
+      if (!repoUrl) {
+        log('Please enter a repository URL', 'error');
+        return;
+      }
+
+      document.getElementById('connectBtn').disabled = true;
+      setStatus('connecting', 'Connecting...');
+      log(`Connecting to ${relay}...`);
+
+      // Create client
+      client = new NostrGitClient({
+        repo: repoUrl,
+        branch: branch,
+        relays: [relay]
+      });
+
+      // Set up event handlers
+      client.on('connect', (url) => {
+        log(`Connected to ${url}`, 'success');
+        setStatus('connected', 'Connected');
+      });
+
+      client.on('disconnect', (url) => {
+        log(`Disconnected from ${url}`);
+      });
+
+      client.on('sync', (event) => {
+        if (event.status === 'start') {
+          log('Syncing repository...', 'info');
+          setStatus('connecting', 'Syncing...');
+        } else if (event.status === 'complete') {
+          log(`Synced to ${event.commit?.slice(0, 8)}`, 'success');
+          setStatus('synced', 'Synced');
+          showCommitInfo(event);
+          showFiles('');
+        } else if (event.status === 'error') {
+          log(`Sync error: ${event.error}`, 'error');
+          setStatus('error', 'Sync failed');
+        }
+      });
+
+      client.on('error', (err) => {
+        log(`Error: ${err.message}`, 'error');
+      });
+
+      client.on('event', (event) => {
+        if (event.type === 'repo') {
+          log(`Repo event: ${event.commit?.slice(0, 8)} on ${event.branch}`, 'info');
+        }
+      });
+
+      // Connect and sync
+      client.connect();
+
+      try {
+        await client.sync();
+        document.getElementById('configPanel').style.display = 'none';
+      } catch (err) {
+        log(`Failed: ${err.message}`, 'error');
+        setStatus('error', 'Failed');
+        document.getElementById('connectBtn').disabled = false;
+      }
+    }
+
+    function showCommitInfo(event) {
+      const el = document.getElementById('commitInfo');
+      el.style.display = 'block';
+      el.innerHTML = `
+        <strong>Commit:</strong> <code>${event.commit?.slice(0, 8)}</code>
+        &nbsp;•&nbsp; ${event.message?.split('\n')[0] || 'No message'}
+        &nbsp;•&nbsp; ${event.author || 'Unknown'}
+        &nbsp;•&nbsp; ${event.date?.toLocaleDateString() || ''}
+      `;
+    }
+
+    async function showFiles(path) {
+      currentPath = path;
+      const panel = document.getElementById('filesPanel');
+      const list = document.getElementById('fileList');
+      const title = document.getElementById('filesTitle');
+
+      panel.style.display = 'block';
+      document.getElementById('viewerPanel').style.display = 'none';
+
+      title.textContent = path ? `📁 /${path}` : '📁 Files';
+      list.innerHTML = '<li class="file-item" style="color: #666;">Loading...</li>';
+
+      try {
+        const files = await client.listFiles(path);
+
+        let html = '';
+
+        // Add parent directory link if not at root
+        if (path) {
+          const parent = path.split('/').slice(0, -1).join('/');
+          html += `<li class="file-item dir" onclick="openItem('dir', '${parent}')">
+            <span class="file-icon">📁</span> ..
+          </li>`;
+        }
+
+        for (const file of files) {
+          const icon = file.type === 'dir' ? '📁' : getFileIcon(file.name);
+          html += `<li class="file-item ${file.type}" onclick="openItem('${file.type}', '${file.path}')">
+            <span class="file-icon">${icon}</span> ${file.name}
+          </li>`;
+        }
+
+        list.innerHTML = html || '<li class="file-item" style="color: #666;">Empty directory</li>';
+      } catch (err) {
+        list.innerHTML = `<li class="file-item" style="color: #ef4444;">Error: ${err.message}</li>`;
+      }
+    }
+
+    function getFileIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      const icons = {
+        js: '📜', ts: '📜', json: '📋', html: '🌐', css: '🎨',
+        md: '📝', txt: '📄', png: '🖼️', jpg: '🖼️', gif: '🖼️',
+        svg: '🎭', sh: '⚙️', yml: '⚙️', yaml: '⚙️'
+      };
+      return icons[ext] || '📄';
+    }
+
+    async function openItem(type, path) {
+      if (type === 'dir') {
+        showFiles(path);
+      } else {
+        await showFile(path);
+      }
+    }
+
+    async function showFile(path) {
+      const panel = document.getElementById('viewerPanel');
+      const title = document.getElementById('viewerTitle');
+      const content = document.getElementById('viewerContent');
+
+      document.getElementById('filesPanel').style.display = 'none';
+      panel.style.display = 'block';
+
+      title.textContent = path;
+      content.textContent = 'Loading...';
+
+      try {
+        const text = await client.readFile(path);
+        content.textContent = text;
+      } catch (err) {
+        content.textContent = `Error reading file: ${err.message}`;
+      }
+    }
+
+    function goBack() {
+      showFiles(currentPath);
+    }
+
+    // Initial log
+    log('Ready. Enter a repo URL and click Connect.');
+  </script>
+</body>
+</html>
