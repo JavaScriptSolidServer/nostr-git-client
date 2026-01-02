@@ -33,6 +33,14 @@
       color: #888;
       font-size: 1.1rem;
     }
+    .status-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
     .status {
       display: inline-flex;
       align-items: center;
@@ -41,7 +49,6 @@
       background: #1a1a2e;
       border-radius: 20px;
       font-size: 13px;
-      margin-top: 15px;
     }
     .dot {
       width: 8px;
@@ -53,6 +60,64 @@
     .dot.synced { background: #10b981; }
     .dot.error { background: #ef4444; }
     @keyframes pulse { 50% { opacity: 0.5; } }
+
+    .edit-mode-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #1a1a2e;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #2a2a3a;
+    }
+    .edit-mode-toggle:hover { border-color: #a78bfa; }
+    .edit-mode-toggle.active {
+      background: #7c3aed;
+      border-color: #7c3aed;
+    }
+
+    .key-panel {
+      display: none;
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #2a2a3a;
+    }
+    .key-panel.show { display: block; }
+    .key-panel label {
+      display: block;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .key-panel input {
+      width: 100%;
+      padding: 10px;
+      background: #0f0f1a;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      color: #fff;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .key-panel input:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+    .key-panel .hint {
+      color: #666;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .key-panel .pubkey {
+      color: #10b981;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 8px;
+    }
 
     .notes-list {
       display: grid;
@@ -81,6 +146,21 @@
       font-size: 14px;
     }
 
+    .new-note-btn {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      padding: 15px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      margin-bottom: 15px;
+      display: none;
+    }
+    .new-note-btn:hover { background: #6d28d9; }
+    .new-note-btn.show { display: block; }
+
     .note-view {
       display: none;
       background: #1a1a2e;
@@ -88,22 +168,75 @@
       padding: 30px;
       border: 1px solid #2a2a3a;
     }
-    .note-view.active {
-      display: block;
+    .note-view.active { display: block; }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .back-btn {
+    .back-btn, .edit-btn, .save-btn, .cancel-btn {
       background: none;
       border: 1px solid #444;
       color: #888;
       padding: 8px 16px;
       border-radius: 6px;
       cursor: pointer;
-      margin-bottom: 20px;
       font-size: 14px;
     }
-    .back-btn:hover {
+    .back-btn:hover, .edit-btn:hover, .cancel-btn:hover {
       border-color: #a78bfa;
       color: #a78bfa;
+    }
+    .save-btn {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: white;
+    }
+    .save-btn:hover { background: #6d28d9; }
+    .save-btn:disabled {
+      background: #444;
+      border-color: #444;
+      cursor: not-allowed;
+    }
+    .edit-btn { display: none; }
+    .edit-btn.show { display: inline-block; }
+    .btn-group { display: flex; gap: 10px; }
+
+    .note-editor {
+      display: none;
+      width: 100%;
+      min-height: 400px;
+      padding: 15px;
+      background: #0f0f1a;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+    .note-editor:focus {
+      outline: none;
+      border-color: #7c3aed;
+    }
+    .note-editor.active { display: block; }
+
+    .filename-input {
+      width: 100%;
+      padding: 10px;
+      background: #0f0f1a;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .filename-input:focus {
+      outline: none;
+      border-color: #7c3aed;
     }
 
     /* Markdown styles */
@@ -125,10 +258,7 @@
       border-radius: 8px;
       overflow-x: auto;
     }
-    .markdown pre code {
-      background: none;
-      padding: 0;
-    }
+    .markdown pre code { background: none; padding: 0; }
     .markdown blockquote {
       border-left: 3px solid #a78bfa;
       margin: 20px 0;
@@ -139,9 +269,6 @@
     .markdown ul, .markdown ol {
       padding-left: 25px;
       line-height: 1.8;
-    }
-    .markdown li input[type="checkbox"] {
-      margin-right: 8px;
     }
 
     .update-toast {
@@ -165,11 +292,9 @@
       color: #666;
       font-size: 12px;
       margin-top: 10px;
+      text-align: center;
     }
-    .last-updated .time {
-      color: #10b981;
-      font-weight: 500;
-    }
+    .last-updated .time { color: #10b981; font-weight: 500; }
 
     .footer {
       text-align: center;
@@ -178,6 +303,33 @@
       font-size: 13px;
     }
     .footer a { color: #a78bfa; }
+
+    .saving-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .saving-overlay.show { display: flex; }
+    .saving-box {
+      background: #1a1a2e;
+      padding: 30px 50px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .saving-box .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #333;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -185,17 +337,40 @@
     <header>
       <h1>📝 Live Notes</h1>
       <p class="tagline">Git-synced notes via Nostr - updates appear automatically</p>
-      <div class="status">
-        <span class="dot" id="statusDot"></span>
-        <span id="statusText">Connecting...</span>
+      <div class="status-row">
+        <div class="status">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Connecting...</span>
+        </div>
+        <div class="edit-mode-toggle" id="editToggle" onclick="toggleEditMode()">
+          ✏️ Edit Mode
+        </div>
       </div>
       <div id="lastUpdated" class="last-updated"></div>
     </header>
 
+    <div id="keyPanel" class="key-panel">
+      <label>Nostr Private Key (hex)</label>
+      <input type="password" id="privkeyInput" placeholder="Enter your private key to enable editing..." oninput="onPrivkeyChange()">
+      <div class="hint">Your key is stored locally and used to sign commits and Nostr events.</div>
+      <div id="pubkeyDisplay" class="pubkey"></div>
+    </div>
+
+    <button id="newNoteBtn" class="new-note-btn" onclick="newNote()">+ New Note</button>
+
     <div id="notesList" class="notes-list"></div>
 
     <div id="noteView" class="note-view">
-      <button class="back-btn" onclick="showList()">← Back to notes</button>
+      <div class="note-header">
+        <button class="back-btn" onclick="showList()">← Back</button>
+        <div class="btn-group">
+          <button id="editBtn" class="edit-btn" onclick="startEdit()">✏️ Edit</button>
+          <button id="cancelBtn" class="cancel-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
+          <button id="saveBtn" class="save-btn" style="display:none" onclick="saveNote()">Save & Push</button>
+        </div>
+      </div>
+      <input type="text" id="filenameInput" class="filename-input" style="display:none" placeholder="filename.md">
+      <textarea id="noteEditor" class="note-editor"></textarea>
       <div id="noteContent" class="markdown"></div>
     </div>
 
@@ -205,31 +380,51 @@
     </div>
   </div>
 
-  <div id="updateToast" class="update-toast">
-    ✨ Notes updated!
+  <div id="updateToast" class="update-toast">✨ Notes updated!</div>
+
+  <div id="savingOverlay" class="saving-overlay">
+    <div class="saving-box">
+      <div class="spinner"></div>
+      <div id="savingText">Saving...</div>
+    </div>
   </div>
 
   <script type="importmap">
   {
     "imports": {
       "nostr-git-client": "https://esm.sh/nostr-git-client@0.0.1",
-      "marked": "https://esm.sh/marked@9.0.0"
+      "marked": "https://esm.sh/marked@9.0.0",
+      "isomorphic-git": "https://esm.sh/isomorphic-git@1.27.1",
+      "nostr-tools": "https://esm.sh/nostr-tools@2.10.0"
     }
   }
   </script>
 
   <script type="module">
-    import { NostrGitClient } from 'nostr-git-client';
+    import { NostrGitClient, createFS, createHttpClient } from 'nostr-git-client';
     import { marked } from 'marked';
+    import git from 'isomorphic-git';
+    import * as nostrTools from 'nostr-tools';
 
     const REPO = 'https://solid.social/mel/public/notes';
+    const REPO_ID = 'notes';
     const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
 
     let client;
     let notes = [];
     let currentNote = null;
+    let currentContent = '';
+    let editMode = false;
+    let isEditing = false;
+    let isNewNote = false;
+    let privkey = localStorage.getItem('nostr-privkey') || '';
 
-    // Simple markdown rendering with marked
+    // Initialize privkey input
+    if (privkey) {
+      document.getElementById('privkeyInput').value = privkey;
+      onPrivkeyChange();
+    }
+
     function renderMarkdown(text) {
       return marked.parse(text);
     }
@@ -242,23 +437,60 @@
     function updateTimestamp() {
       const now = new Date();
       const time = now.toLocaleTimeString();
-      document.getElementById('lastUpdated').innerHTML =
-        `Last synced: <span class="time">${time}</span>`;
+      document.getElementById('lastUpdated').innerHTML = `Last synced: <span class="time">${time}</span>`;
     }
 
-    function showToast() {
+    function showToast(msg = '✨ Notes updated!') {
       const toast = document.getElementById('updateToast');
+      toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
+
+    function showSaving(text) {
+      document.getElementById('savingText').textContent = text;
+      document.getElementById('savingOverlay').classList.add('show');
+    }
+
+    function hideSaving() {
+      document.getElementById('savingOverlay').classList.remove('show');
+    }
+
+    window.toggleEditMode = function() {
+      editMode = !editMode;
+      document.getElementById('editToggle').classList.toggle('active', editMode);
+      document.getElementById('keyPanel').classList.toggle('show', editMode);
+      document.getElementById('newNoteBtn').classList.toggle('show', editMode && privkey);
+      document.getElementById('editBtn').classList.toggle('show', editMode && privkey && currentNote);
+    };
+
+    window.onPrivkeyChange = function() {
+      privkey = document.getElementById('privkeyInput').value.trim();
+      localStorage.setItem('nostr-privkey', privkey);
+
+      const pubkeyDisplay = document.getElementById('pubkeyDisplay');
+      if (privkey && privkey.length === 64) {
+        try {
+          const pubkey = nostrTools.getPublicKey(privkey);
+          pubkeyDisplay.textContent = `Pubkey: ${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`;
+          document.getElementById('newNoteBtn').classList.toggle('show', editMode);
+          document.getElementById('editBtn').classList.toggle('show', editMode && currentNote);
+        } catch {
+          pubkeyDisplay.textContent = 'Invalid key';
+        }
+      } else {
+        pubkeyDisplay.textContent = '';
+        document.getElementById('newNoteBtn').classList.remove('show');
+        document.getElementById('editBtn').classList.remove('show');
+      }
+    };
 
     async function loadNotes() {
       const files = await client.listFiles();
       notes = files.filter(f => f.name.endsWith('.md'));
       renderList();
 
-      // If viewing a note, refresh it
-      if (currentNote) {
+      if (currentNote && !isEditing) {
         await showNote(currentNote);
       }
     }
@@ -285,17 +517,198 @@
 
     window.showNote = async function(path) {
       currentNote = path;
-      const content = await client.readFile(path);
-      document.getElementById('noteContent').innerHTML = renderMarkdown(content);
+      isNewNote = false;
+      currentContent = await client.readFile(path);
+
+      document.getElementById('noteContent').innerHTML = renderMarkdown(currentContent);
+      document.getElementById('noteContent').style.display = 'block';
+      document.getElementById('noteEditor').style.display = 'none';
+      document.getElementById('filenameInput').style.display = 'none';
+      document.getElementById('editBtn').classList.toggle('show', editMode && privkey);
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('saveBtn').style.display = 'none';
+
       document.getElementById('notesList').style.display = 'none';
+      document.getElementById('newNoteBtn').style.display = 'none';
       document.getElementById('noteView').classList.add('active');
+      isEditing = false;
     };
 
     window.showList = function() {
       currentNote = null;
+      isEditing = false;
+      isNewNote = false;
       document.getElementById('notesList').style.display = 'grid';
+      document.getElementById('newNoteBtn').classList.toggle('show', editMode && privkey);
       document.getElementById('noteView').classList.remove('active');
     };
+
+    window.newNote = function() {
+      currentNote = null;
+      isNewNote = true;
+      currentContent = '# New Note\n\nStart writing...';
+
+      document.getElementById('noteContent').style.display = 'none';
+      document.getElementById('noteEditor').value = currentContent;
+      document.getElementById('noteEditor').style.display = 'block';
+      document.getElementById('filenameInput').value = '';
+      document.getElementById('filenameInput').style.display = 'block';
+      document.getElementById('filenameInput').placeholder = 'filename.md';
+      document.getElementById('editBtn').style.display = 'none';
+      document.getElementById('cancelBtn').style.display = 'inline-block';
+      document.getElementById('saveBtn').style.display = 'inline-block';
+
+      document.getElementById('notesList').style.display = 'none';
+      document.getElementById('newNoteBtn').style.display = 'none';
+      document.getElementById('noteView').classList.add('active');
+      isEditing = true;
+    };
+
+    window.startEdit = function() {
+      isEditing = true;
+      document.getElementById('noteContent').style.display = 'none';
+      document.getElementById('noteEditor').value = currentContent;
+      document.getElementById('noteEditor').style.display = 'block';
+      document.getElementById('editBtn').style.display = 'none';
+      document.getElementById('cancelBtn').style.display = 'inline-block';
+      document.getElementById('saveBtn').style.display = 'inline-block';
+    };
+
+    window.cancelEdit = function() {
+      if (isNewNote) {
+        showList();
+      } else {
+        isEditing = false;
+        document.getElementById('noteContent').style.display = 'block';
+        document.getElementById('noteEditor').style.display = 'none';
+        document.getElementById('editBtn').classList.toggle('show', editMode && privkey);
+        document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'none';
+      }
+    };
+
+    window.saveNote = async function() {
+      if (!privkey) {
+        alert('Please enter your private key first');
+        return;
+      }
+
+      const content = document.getElementById('noteEditor').value;
+      let filepath = currentNote;
+
+      if (isNewNote) {
+        filepath = document.getElementById('filenameInput').value.trim();
+        if (!filepath) {
+          alert('Please enter a filename');
+          return;
+        }
+        if (!filepath.endsWith('.md')) {
+          filepath += '.md';
+        }
+      }
+
+      try {
+        showSaving('Writing file...');
+
+        // Write file to IndexedDB filesystem
+        const fs = client.fs;
+        const dir = client.dir;
+
+        await fs.promises.writeFile(`${dir}/${filepath}`, content, 'utf8');
+
+        showSaving('Committing...');
+
+        // Git add and commit
+        await git.add({ fs, dir, filepath });
+        await git.commit({
+          fs,
+          dir,
+          message: isNewNote ? `Add ${filepath}` : `Update ${filepath}`,
+          author: { name: 'Live Notes', email: 'notes@example.com' }
+        });
+
+        showSaving('Pushing to server...');
+
+        // Push to remote
+        const http = createHttpClient();
+        await git.push({
+          fs,
+          http,
+          dir,
+          url: REPO,
+          ref: 'main',
+          onAuth: () => ({ username: privkey, password: '' })
+        });
+
+        showSaving('Publishing to Nostr...');
+
+        // Get new commit hash
+        const commits = await git.log({ fs, dir, depth: 1 });
+        const commit = commits[0].oid;
+
+        // Publish Nostr event
+        await publishNostrEvent(commit);
+
+        hideSaving();
+        showToast('✅ Saved and published!');
+
+        // Refresh
+        currentNote = filepath;
+        isNewNote = false;
+        isEditing = false;
+        currentContent = content;
+
+        document.getElementById('noteContent').innerHTML = renderMarkdown(content);
+        document.getElementById('noteContent').style.display = 'block';
+        document.getElementById('noteEditor').style.display = 'none';
+        document.getElementById('filenameInput').style.display = 'none';
+        document.getElementById('editBtn').classList.toggle('show', editMode && privkey);
+        document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'none';
+
+        updateTimestamp();
+        await loadNotes();
+
+      } catch (err) {
+        hideSaving();
+        console.error('Save failed:', err);
+        alert('Save failed: ' + err.message);
+      }
+    };
+
+    async function publishNostrEvent(commit) {
+      const pubkey = nostrTools.getPublicKey(privkey);
+
+      const event = {
+        kind: 30618,
+        pubkey,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['d', REPO_ID],
+          ['refs/heads/main', commit]
+        ],
+        content: ''
+      };
+
+      event.id = nostrTools.getEventHash(event);
+      event.sig = nostrTools.getSignature(event, privkey);
+
+      // Publish to relays
+      for (const url of RELAYS) {
+        try {
+          const ws = new WebSocket(url);
+          await new Promise((resolve, reject) => {
+            ws.onopen = () => {
+              ws.send(JSON.stringify(['EVENT', event]));
+              setTimeout(() => { ws.close(); resolve(); }, 1000);
+            };
+            ws.onerror = reject;
+          });
+        } catch (e) {
+          console.warn('Failed to publish to', url, e);
+        }
+      }
+    }
 
     // Initialize
     async function init() {
@@ -327,7 +740,6 @@
         }
       });
 
-      // Connect and sync
       setStatus('syncing', 'Connecting...');
       client.connect();
       await client.sync();
