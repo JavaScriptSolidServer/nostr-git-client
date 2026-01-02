@@ -1,0 +1,38 @@
+{
+  "name": "nostr-git-client",
+  "version": "0.0.1",
+  "description": "Browser-based git sync via Nostr with optional Bitcoin anchoring",
+  "type": "module",
+  "main": "src/index.js",
+  "browser": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@isomorphic-git/lightning-fs": "^4.6.0",
+    "isomorphic-git": "^1.27.1",
+    "nostr-tools": "^2.19.4"
+  },
+  "optionalDependencies": {
+    "blocktrails": "^0.0.11"
+  },
+  "keywords": [
+    "nostr",
+    "git",
+    "isomorphic-git",
+    "browser",
+    "sync",
+    "nip-34",
+    "bitcoin",
+    "anchor",
+    "decentralized"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JavaScriptSolidServer/nostr-git-client"
+  },
+  "license": "MIT"
+}
