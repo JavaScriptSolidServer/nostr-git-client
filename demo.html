@@ -618,11 +618,31 @@
       }
 
       try {
-        showSaving('Writing file...');
+        showSaving('Syncing fresh copy...');
 
-        // Write file to IndexedDB filesystem
+        // Clear and re-clone to ensure clean state
         const fs = client.fs;
         const dir = client.dir;
+        const http = createNip98HttpClient(privkey);
+
+        // Remove old repo
+        try {
+          await fs.promises.rm(dir, { recursive: true });
+        } catch (e) { /* ignore */ }
+        await fs.promises.mkdir(dir, { recursive: true });
+
+        // Fresh clone
+        await git.clone({
+          fs,
+          http,
+          dir,
+          url: REPO,
+          ref: 'main',
+          singleBranch: true,
+          depth: 1
+        });
+
+        showSaving('Writing file...');
 
         await fs.promises.writeFile(`${dir}/${filepath}`, content, 'utf8');
 
@@ -639,15 +659,12 @@
 
         showSaving('Pushing to server...');
 
-        // Push to remote with NIP-98 auth
-        const http = createNip98HttpClient(privkey);
         await git.push({
           fs,
           http,
           dir,
           url: REPO,
-          ref: 'main',
-          force: true  // Force push since we may be editing on stale state
+          ref: 'main'
         });
 
         showSaving('Publishing to Nostr...');
