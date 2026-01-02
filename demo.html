@@ -706,10 +706,22 @@
       }
     };
 
+    // Concatenate array body (isomorphic-git sends body as array of Uint8Arrays)
+    function concatBody(body) {
+      if (!Array.isArray(body)) return body;
+      const chunks = body.map(c => c instanceof Uint8Array ? c : new Uint8Array(c));
+      const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return result;
+    }
+
     // Create HTTP client with NIP-98 auth for git operations
     function createNip98HttpClient(privkey) {
-      const baseHttp = createHttpClient();
-
       return {
         async request({ url, method, headers, body }) {
           // Create NIP-98 auth event
@@ -732,13 +744,21 @@
           // Base64 encode the event
           const authHeader = 'Nostr ' + btoa(JSON.stringify(signedEvent));
 
-          // Add auth header
-          const authHeaders = {
-            ...headers,
-            'Authorization': authHeader
-          };
+          // Concatenate body if array and make request
+          const res = await fetch(url, {
+            method,
+            headers: { ...headers, 'Authorization': authHeader },
+            body: concatBody(body)
+          });
 
-          return baseHttp.request({ url, method, headers: authHeaders, body });
+          return {
+            url: res.url,
+            method,
+            statusCode: res.status,
+            statusMessage: res.statusText,
+            headers: Object.fromEntries(res.headers.entries()),
+            body: [new Uint8Array(await res.arrayBuffer())]
+          };
         }
       };
     }
