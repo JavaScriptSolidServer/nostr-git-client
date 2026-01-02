@@ -61,7 +61,7 @@
     .dot.error { background: #ef4444; }
     @keyframes pulse { 50% { opacity: 0.5; } }
 
-    .edit-mode-toggle {
+    .toggle-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -72,8 +72,8 @@
       cursor: pointer;
       border: 1px solid #2a2a3a;
     }
-    .edit-mode-toggle:hover { border-color: #a78bfa; }
-    .edit-mode-toggle.active {
+    .toggle-btn:hover { border-color: #a78bfa; }
+    .toggle-btn.active {
       background: #7c3aed;
       border-color: #7c3aed;
     }
@@ -342,8 +342,11 @@
           <span class="dot" id="statusDot"></span>
           <span id="statusText">Connecting...</span>
         </div>
-        <div class="edit-mode-toggle" id="editToggle" onclick="toggleEditMode()">
+        <div class="toggle-btn" id="editToggle" onclick="toggleEditMode()">
           ✏️ Edit Mode
+        </div>
+        <div class="toggle-btn" id="settingsToggle" onclick="toggleSettings()">
+          ⚙️ Settings
         </div>
       </div>
       <div id="lastUpdated" class="last-updated"></div>
@@ -354,6 +357,16 @@
       <input type="password" id="privkeyInput" placeholder="Enter your private key to enable editing..." oninput="onPrivkeyChange()">
       <div class="hint">Your key is stored locally and used to sign commits and Nostr events.</div>
       <div id="pubkeyDisplay" class="pubkey"></div>
+    </div>
+
+    <div id="settingsPanel" class="key-panel">
+      <label>Repository URL</label>
+      <input type="text" id="repoInput" placeholder="https://example.com/user/repo" oninput="onSettingsChange()">
+      <div class="hint" style="margin-bottom: 15px;">Git repository URL (must support CORS)</div>
+      <label>Branch</label>
+      <input type="text" id="branchInput" placeholder="main" oninput="onSettingsChange()">
+      <div class="hint">Branch to sync (default: main)</div>
+      <button id="applySettingsBtn" onclick="applySettings()" style="margin-top: 15px; padding: 10px 20px; background: #7c3aed; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">Apply & Reload</button>
     </div>
 
     <button id="newNoteBtn" class="new-note-btn" onclick="newNote()">+ New Note</button>
@@ -376,7 +389,7 @@
 
     <div class="footer">
       Powered by <a href="https://github.com/JavaScriptSolidServer/nostr-git-client">nostr-git-client</a>
-      • Syncing from <a href="https://solid.social/mel/public/notes">solid.social</a>
+      • Syncing from <a id="repoLink" href=""></a>
     </div>
   </div>
 
@@ -415,18 +428,83 @@
       return bytes;
     }
 
-    const REPO = 'https://solid.social/mel/public/notes';
-    const REPO_ID = 'notes';
+    const DEFAULT_REPO = 'https://solid.social/mel/public/notes';
+    const DEFAULT_BRANCH = 'main';
     const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
+
+    // Load settings from localStorage
+    let REPO = localStorage.getItem('ngc-repo') || DEFAULT_REPO;
+    let BRANCH = localStorage.getItem('ngc-branch') || DEFAULT_BRANCH;
+    let REPO_ID = REPO.split('/').pop();
 
     let client;
     let notes = [];
     let currentNote = null;
     let currentContent = '';
     let editMode = false;
+    let settingsOpen = false;
     let isEditing = false;
     let isNewNote = false;
     let privkey = localStorage.getItem('nostr-privkey') || '';
+
+    // Initialize settings inputs
+    function initSettings() {
+      document.getElementById('repoInput').value = REPO;
+      document.getElementById('branchInput').value = BRANCH;
+      updateRepoLink();
+    }
+
+    function updateRepoLink() {
+      const link = document.getElementById('repoLink');
+      link.href = REPO;
+      link.textContent = new URL(REPO).hostname + new URL(REPO).pathname;
+    }
+
+    window.toggleSettings = function() {
+      settingsOpen = !settingsOpen;
+      document.getElementById('settingsToggle').classList.toggle('active', settingsOpen);
+      document.getElementById('settingsPanel').classList.toggle('show', settingsOpen);
+    };
+
+    window.onSettingsChange = function() {
+      // Just track changes, apply on button click
+    };
+
+    window.applySettings = async function() {
+      const newRepo = document.getElementById('repoInput').value.trim();
+      const newBranch = document.getElementById('branchInput').value.trim() || 'main';
+
+      if (!newRepo) {
+        alert('Please enter a repository URL');
+        return;
+      }
+
+      // Save to localStorage
+      localStorage.setItem('ngc-repo', newRepo);
+      localStorage.setItem('ngc-branch', newBranch);
+
+      // Update globals
+      REPO = newRepo;
+      BRANCH = newBranch;
+      REPO_ID = REPO.split('/').pop();
+
+      updateRepoLink();
+
+      // Clear old data and reinitialize
+      if (client) {
+        client.disconnect();
+        await client.clear();
+      }
+
+      notes = [];
+      currentNote = null;
+      document.getElementById('notesList').innerHTML = '';
+      document.getElementById('noteView').classList.remove('active');
+
+      await init();
+      toggleSettings(); // Close panel
+      showToast('Switched to ' + REPO_ID);
+    };
 
     function renderMarkdown(text) {
       return marked.parse(text);
@@ -638,7 +716,7 @@
           http,
           dir,
           url: REPO,
-          ref: 'main',
+          ref: BRANCH,
           singleBranch: true,
           depth: 1
         });
@@ -665,7 +743,7 @@
           http,
           dir,
           url: REPO,
-          ref: 'main',
+          ref: BRANCH,
           force: true
         });
 
@@ -770,7 +848,7 @@
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['d', REPO_ID],
-          ['refs/heads/main', commit]
+          [`refs/heads/${BRANCH}`, commit]
         ],
         content: ''
       };
@@ -796,9 +874,12 @@
 
     // Initialize
     async function init() {
+      initSettings();
+
       client = new NostrGitClient({
         repo: REPO,
-        branch: 'main',
+        repoId: REPO_ID,
+        branch: BRANCH,
         relays: RELAYS
       });
 
