@@ -696,11 +696,11 @@
             content: ''
           };
 
-          authEvent.id = nostrTools.getEventHash(authEvent);
-          authEvent.sig = nostrTools.getSignature(authEvent, privkey);
+          // Use finalizeEvent which hashes and signs
+          const signedEvent = nostrTools.finalizeEvent(authEvent, nostrTools.hexToBytes(privkey));
 
           // Base64 encode the event
-          const authHeader = 'Nostr ' + btoa(JSON.stringify(authEvent));
+          const authHeader = 'Nostr ' + btoa(JSON.stringify(signedEvent));
 
           // Add auth header
           const authHeaders = {
@@ -714,11 +714,10 @@
     }
 
     async function publishNostrEvent(commit) {
-      const pubkey = nostrTools.getPublicKey(privkey);
+      const secretKey = nostrTools.hexToBytes(privkey);
 
-      const event = {
+      const eventTemplate = {
         kind: 30618,
-        pubkey,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['d', REPO_ID],
@@ -727,8 +726,7 @@
         content: ''
       };
 
-      event.id = nostrTools.getEventHash(event);
-      event.sig = nostrTools.getSignature(event, privkey);
+      const signedEvent = nostrTools.finalizeEvent(eventTemplate, secretKey);
 
       // Publish to relays
       for (const url of RELAYS) {
@@ -736,7 +734,7 @@
           const ws = new WebSocket(url);
           await new Promise((resolve, reject) => {
             ws.onopen = () => {
-              ws.send(JSON.stringify(['EVENT', event]));
+              ws.send(JSON.stringify(['EVENT', signedEvent]));
               setTimeout(() => { ws.close(); resolve(); }, 1000);
             };
             ws.onerror = reject;
