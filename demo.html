@@ -625,11 +625,13 @@
         const dir = client.dir;
         const http = createNip98HttpClient(privkey);
 
-        // Remove old repo
+        // Remove old repo and recreate
         try {
-          await fs.promises.rm(dir, { recursive: true });
+          await fs.promises.rm(dir, { recursive: true, force: true });
         } catch (e) { /* ignore */ }
-        await fs.promises.mkdir(dir, { recursive: true });
+        try {
+          await fs.promises.mkdir(dir, { recursive: true });
+        } catch (e) { /* ignore if exists */ }
 
         // Fresh clone
         await git.clone({
